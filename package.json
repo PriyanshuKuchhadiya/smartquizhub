@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "browser-image-compression": "^2.0.2",
     "encoding": "^0.1.13",
     "firebase": "^11.0.2",
     "mongoose": "^8.8.3",
