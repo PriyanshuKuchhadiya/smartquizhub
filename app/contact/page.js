@@ -7,8 +7,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white flex flex-col items-center justify-center px-4">
       <h1 className="text-4xl font-bold mb-6">Contact Us</h1>
       <p className="text-lg text-center max-w-2xl mb-6">
-        We'd love to hear from you! Whether you have a question, feedback, or
-        just want to say hello, feel free to reach out to us.
+        We&apos;d love to hear from you! Whether you have a question, feedback, or just want to say hello, feel free to reach out to us.
       </p>
       <form className="bg-white text-gray-800 p-6 rounded-lg shadow-md w-full max-w-md">
         <div className="mb-4">
