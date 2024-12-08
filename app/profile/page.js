@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { auth } from "../_utils/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Link from "next/link";
+import Image from "next/image";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -55,7 +56,6 @@ const ProfilePage = () => {
         setDisplayName(data.displayName || "Anonymous");
         setProfilePicture(data.profilePicture || defaultProfileImage);
       } else {
-        // Create a default profile document if it doesn't exist
         const defaultProfile = {
           displayName: currentUser.displayName || "Anonymous",
           email: currentUser.email,
@@ -141,10 +141,12 @@ const ProfilePage = () => {
       {profile ? (
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
           <div className="mb-6 text-center">
-            <img
+            <Image
               src={profilePicture || defaultProfileImage}
               alt="Profile"
-              className="w-32 h-32 mx-auto rounded-full object-cover mb-4"
+              className="mx-auto rounded-full object-cover mb-4"
+              width={128}
+              height={128}
             />
             <input
               type="file"

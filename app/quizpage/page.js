@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -15,7 +15,7 @@ export default function QuizPage() {
   const [categoryName, setCategoryName] = useState("General Knowledge");
 
   // States for quiz logic
-  const [showIntro, setShowIntro] = useState(true); // Control whether intro screen is shown
+  const [showIntro, setShowIntro] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -23,9 +23,9 @@ export default function QuizPage() {
   const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(300); // Timer in seconds
-  const [showPopup, setShowPopup] = useState(false); // Popup for Next button
-  const [showQuitPopup, setShowQuitPopup] = useState(false); // Popup for Quit Quiz button
+  const [timeLeft, setTimeLeft] = useState(300);
+  const [showPopup, setShowPopup] = useState(false);
+  const [showQuitPopup, setShowQuitPopup] = useState(false);
 
   // Initialize query parameters
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function QuizPage() {
   }, [searchParams]);
 
   // Fetch quiz questions
-  const fetchQuizQuestions = async () => {
+  const fetchQuizQuestions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -68,13 +68,13 @@ export default function QuizPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [amount, category, difficulty, type]);
 
   useEffect(() => {
     if (!showIntro) {
       fetchQuizQuestions();
     }
-  }, [showIntro]);
+  }, [showIntro, fetchQuizQuestions]);
 
   // Timer logic
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function QuizPage() {
       const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
       return () => clearInterval(timer);
     } else if (timeLeft === 0) {
-      handleSubmit(); // Auto-submit when time runs out
+      handleSubmit();
     }
   }, [timeLeft, submitted, showIntro]);
 
@@ -93,7 +93,7 @@ export default function QuizPage() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     let calculatedScore = 0;
 
     questions.forEach((question, index) => {
@@ -104,19 +104,19 @@ export default function QuizPage() {
 
     setScore(calculatedScore);
     setSubmitted(true);
-  };
+  }, [questions, userAnswers]);
 
   const quitQuiz = () => {
-    setShowQuitPopup(true); // Show quit confirmation popup
+    setShowQuitPopup(true);
   };
 
   const confirmQuit = () => {
-    setShowQuitPopup(false); // Close the popup
-    setShowIntro(true); // Redirect to intro
+    setShowQuitPopup(false);
+    setShowIntro(true);
   };
 
   const cancelQuit = () => {
-    setShowQuitPopup(false); // Close the popup without quitting
+    setShowQuitPopup(false);
   };
 
   const goToNextQuestion = () => {
@@ -220,7 +220,6 @@ export default function QuizPage() {
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-4">
-            {/* Sidebar */}
             <div className="col-span-1 bg-gray-200 rounded-lg shadow p-6 overflow-y-auto h-[calc(100vh-200px)]">
               <h3 className="text-lg font-bold mb-4">Questions</h3>
               {questions.map((_, index) => (
@@ -235,8 +234,6 @@ export default function QuizPage() {
                 </button>
               ))}
             </div>
-
-            {/* Main Content */}
             <div className="col-span-3">
               <div className="bg-gray-100 text-gray-800 rounded-lg shadow-md p-6 mb-6">
                 <h2 className="text-xl font-semibold mb-4">
@@ -262,7 +259,6 @@ export default function QuizPage() {
                   ))}
                 </ul>
               </div>
-
               <div className="flex justify-between">
                 <button
                   onClick={quitQuiz}
@@ -286,7 +282,6 @@ export default function QuizPage() {
                   </button>
                 </div>
               </div>
-
               <div className="text-center mt-6">
                 <button
                   onClick={handleSubmit}
@@ -300,8 +295,6 @@ export default function QuizPage() {
           </div>
         )}
       </div>
-
-      {/* Popup for Next */}
       {showPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -315,8 +308,6 @@ export default function QuizPage() {
           </div>
         </div>
       )}
-
-      {/* Popup for Quit */}
       {showQuitPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
