@@ -109,14 +109,14 @@ export default function Home() {
         <div className="flex flex-wrap justify-center gap-8">
           <div className="bg-white text-gray-800 p-6 rounded-lg shadow-md max-w-sm">
             <p className="italic">
-              "SmartQuizHub is an amazing platform! I've learned so much while
-              having fun."
+              &quot;SmartQuizHub is an amazing platform! I&apos;ve learned so much while
+              having fun.&quot;
             </p>
             <p className="mt-4 font-bold">- Alex Johnson</p>
           </div>
           <div className="bg-white text-gray-800 p-6 rounded-lg shadow-md max-w-sm">
             <p className="italic">
-              "The quizzes are challenging yet enjoyable. Highly recommended!"
+              &quot;The quizzes are challenging yet enjoyable. Highly recommended!&quot;
             </p>
             <p className="mt-4 font-bold">- Maria Gonzalez</p>
           </div>
