@@ -42,7 +42,6 @@ export default function QuizPage() {
   const fetchQuizQuestions = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await fetch(
         `https://opentdb.com/api.php?amount=${amount}&category=${category}&difficulty=${difficulty}&type=${type}`
       );
@@ -52,12 +51,9 @@ export default function QuizPage() {
       }
 
       const data = await response.json();
-      console.log("API Response:", data);
 
       if (data.response_code === 1) {
-        throw new Error(
-          "No questions available for the selected difficulty and category. Please try a different combination."
-        );
+        throw new Error("No questions available for the selected criteria.");
       }
 
       setQuestions(
@@ -81,22 +77,6 @@ export default function QuizPage() {
   }, [showIntro, fetchQuizQuestions]);
 
   // Timer logic
-  useEffect(() => {
-    if (!submitted && timeLeft > 0 && !showIntro) {
-      const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-      return () => clearInterval(timer);
-    } else if (timeLeft === 0) {
-      handleSubmit(); // Auto-submit when time runs out
-    }
-  }, [timeLeft, submitted, showIntro]);
-
-  const handleAnswerChange = (selectedOption) => {
-    setUserAnswers((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: selectedOption,
-    }));
-  };
-
   const handleSubmit = useCallback(() => {
     let calculatedScore = 0;
 
@@ -109,6 +89,22 @@ export default function QuizPage() {
     setScore(calculatedScore);
     setSubmitted(true);
   }, [questions, userAnswers]);
+
+  useEffect(() => {
+    if (!submitted && timeLeft > 0 && !showIntro) {
+      const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+      return () => clearInterval(timer);
+    } else if (timeLeft === 0) {
+      handleSubmit(); // Auto-submit when time runs out
+    }
+  }, [timeLeft, submitted, showIntro, handleSubmit]);
+
+  const handleAnswerChange = (selectedOption) => {
+    setUserAnswers((prev) => ({
+      ...prev,
+      [currentQuestionIndex]: selectedOption,
+    }));
+  };
 
   const quitQuiz = () => {
     setShowQuitPopup(true); // Show quit confirmation popup
