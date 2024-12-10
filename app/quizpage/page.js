@@ -15,7 +15,7 @@ export default function QuizPage() {
   const [categoryName, setCategoryName] = useState("General Knowledge");
 
   // States for quiz logic
-  const [showIntro, setShowIntro] = useState(true); // Control whether intro screen is shown
+  const [showIntro, setShowIntro] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -23,9 +23,10 @@ export default function QuizPage() {
   const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(300); // Timer in seconds
+  const [timeLeft, setTimeLeft] = useState(300);
   const [showPopup, setShowPopup] = useState(false); // Popup for Next button
   const [showQuitPopup, setShowQuitPopup] = useState(false); // Popup for Quit Quiz button
+  const [showSubmitPopup, setShowSubmitPopup] = useState(false); // Popup for Submit button
 
   // Initialize query parameters
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function QuizPage() {
   const fetchQuizQuestions = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(
         `https://opentdb.com/api.php?amount=${amount}&category=${category}&difficulty=${difficulty}&type=${type}`
       );
@@ -53,7 +55,9 @@ export default function QuizPage() {
       const data = await response.json();
 
       if (data.response_code === 1) {
-        throw new Error("No questions available for the selected criteria.");
+        throw new Error(
+          "No questions available for the selected difficulty and category. Please try a different combination."
+        );
       }
 
       setQuestions(
@@ -77,6 +81,22 @@ export default function QuizPage() {
   }, [showIntro, fetchQuizQuestions]);
 
   // Timer logic
+  useEffect(() => {
+    if (!submitted && timeLeft > 0 && !showIntro) {
+      const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+      return () => clearInterval(timer);
+    } else if (timeLeft === 0) {
+      handleSubmit(); // Auto-submit when time runs out
+    }
+  }, [timeLeft, submitted, showIntro]);
+
+  const handleAnswerChange = (selectedOption) => {
+    setUserAnswers((prev) => ({
+      ...prev,
+      [currentQuestionIndex]: selectedOption,
+    }));
+  };
+
   const handleSubmit = useCallback(() => {
     let calculatedScore = 0;
 
@@ -88,23 +108,8 @@ export default function QuizPage() {
 
     setScore(calculatedScore);
     setSubmitted(true);
+    setShowSubmitPopup(false); // Close the submit popup after submitting
   }, [questions, userAnswers]);
-
-  useEffect(() => {
-    if (!submitted && timeLeft > 0 && !showIntro) {
-      const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-      return () => clearInterval(timer);
-    } else if (timeLeft === 0) {
-      handleSubmit(); // Auto-submit when time runs out
-    }
-  }, [timeLeft, submitted, showIntro, handleSubmit]);
-
-  const handleAnswerChange = (selectedOption) => {
-    setUserAnswers((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: selectedOption,
-    }));
-  };
 
   const quitQuiz = () => {
     setShowQuitPopup(true); // Show quit confirmation popup
@@ -124,7 +129,9 @@ export default function QuizPage() {
       setShowPopup(true);
       return;
     }
-    setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1));
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1));
+    }
   };
 
   const goToPreviousQuestion = () => {
@@ -212,6 +219,35 @@ export default function QuizPage() {
             <p className="text-xl mt-4">
               Your Score: {score}/{questions.length}
             </p>
+
+            <div className="mt-8 text-left bg-gray-100 p-6 rounded-lg shadow-lg">
+              <h3 className="text-2xl font-semibold mb-4">Results:</h3>
+              {questions.map((question, index) => (
+                <div key={index} className="mb-6">
+                  <h4 className="font-bold">
+                    Q{index + 1}:{" "}
+                    <span dangerouslySetInnerHTML={{ __html: question.question }} />
+                  </h4>
+                  <ul className="mt-2">
+                    {question.options.map((option, idx) => (
+                      <li
+                        key={idx}
+                        className={`p-2 rounded ${
+                          option === question.correct
+                            ? "bg-green-100 text-green-800 font-bold"
+                            : option === userAnswers[index] && userAnswers[index] !== question.correct
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-200"
+                        }`}
+                      >
+                        <span dangerouslySetInnerHTML={{ __html: option }} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
             <Link href="/topics">
               <button className="mt-6 px-6 py-3 bg-yellow-400 text-gray-800 rounded-lg font-bold hover:bg-yellow-500">
                 Back to Topics
@@ -223,17 +259,27 @@ export default function QuizPage() {
             {/* Sidebar */}
             <div className="col-span-1 bg-gray-200 rounded-lg shadow p-6 overflow-y-auto h-[calc(100vh-200px)]">
               <h3 className="text-lg font-bold mb-4">Questions</h3>
-              {questions.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentQuestionIndex(index)}
-                  className={`w-full text-left px-4 py-2 mb-2 rounded-lg ${
-                    index === currentQuestionIndex ? "bg-blue-500 text-white" : "bg-gray-300"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
+              <div className="grid grid-cols-5 gap-2">
+                {questions.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (!userAnswers[currentQuestionIndex]) {
+                        setShowPopup(true);
+                      } else {
+                        setCurrentQuestionIndex(index);
+                      }
+                    }}
+                    className={`w-12 h-12 flex items-center justify-center font-bold text-lg rounded-full border-2 ${
+                      index === currentQuestionIndex
+                        ? "bg-blue-500 text-white border-blue-700"
+                        : "bg-gray-300 text-gray-800"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Main Content */}
@@ -281,6 +327,7 @@ export default function QuizPage() {
                   <button
                     onClick={goToNextQuestion}
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    disabled={currentQuestionIndex === questions.length - 1}
                   >
                     Next
                   </button>
@@ -289,9 +336,8 @@ export default function QuizPage() {
 
               <div className="text-center mt-6">
                 <button
-                  onClick={handleSubmit}
+                  onClick={() => setShowSubmitPopup(true)}
                   className="bg-green-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-600"
-                  disabled={Object.keys(userAnswers).length !== questions.length}
                 >
                   Submit Quiz
                 </button>
@@ -333,6 +379,29 @@ export default function QuizPage() {
                 className="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600"
               >
                 No, Stay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup for Submit */}
+      {showSubmitPopup && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <h2 className="text-xl font-semibold mb-4">Are you sure you want to submit the quiz?</h2>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleSubmit}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600"
+              >
+                Yes, Submit
+              </button>
+              <button
+                onClick={() => setShowSubmitPopup(false)}
+                className="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600"
+              >
+                No, Cancel
               </button>
             </div>
           </div>

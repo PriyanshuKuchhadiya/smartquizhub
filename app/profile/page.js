@@ -1,6 +1,6 @@
 "use client";
 
-import { db, storage } from "../_utils/firebase";
+import { db } from "../_utils/firebase";
 import {
   doc,
   getDoc,
@@ -8,15 +8,13 @@ import {
   collection,
   query,
   where,
-  getDocs,
+  onSnapshot,
   setDoc,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useEffect, useState } from "react";
 import { auth } from "../_utils/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, updateProfile } from "firebase/auth"; // Import updateProfile
 import Link from "next/link";
-import Image from "next/image";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -24,20 +22,15 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
-  const [uploading, setUploading] = useState(false);
   const [quizHistory, setQuizHistory] = useState([]);
   const [achievements, setAchievements] = useState([]);
-
-  const defaultProfileImage =
-    "https://via.placeholder.com/150?text=Default+Profile";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         await fetchOrCreateUserProfile(currentUser);
-        fetchQuizHistory(currentUser.uid);
+        subscribeToQuizHistory(currentUser.uid);
         fetchAchievements();
       }
       setLoading(false);
@@ -54,12 +47,10 @@ const ProfilePage = () => {
         const data = userDoc.data();
         setProfile(data);
         setDisplayName(data.displayName || "Anonymous");
-        setProfilePicture(data.profilePicture || defaultProfileImage);
       } else {
         const defaultProfile = {
           displayName: currentUser.displayName || "Anonymous",
           email: currentUser.email,
-          profilePicture: defaultProfileImage,
         };
         await setDoc(userDocRef, defaultProfile);
         setProfile(defaultProfile);
@@ -69,15 +60,18 @@ const ProfilePage = () => {
     }
   };
 
-  const fetchQuizHistory = async (userId) => {
+  const subscribeToQuizHistory = (userId) => {
     try {
       const quizCollection = collection(db, "quizResults");
       const q = query(quizCollection, where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
-      const history = querySnapshot.docs.map((doc) => doc.data());
-      setQuizHistory(history);
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const history = querySnapshot.docs.map((doc) => doc.data());
+        setQuizHistory(history);
+      });
+
+      return () => unsubscribe(); // Clean up listener when component unmounts
     } catch (error) {
-      console.error("Error fetching quiz history:", error);
+      console.error("Error subscribing to quiz history:", error);
     }
   };
 
@@ -90,38 +84,18 @@ const ProfilePage = () => {
     setAchievements(badges);
   };
 
-  const handleProfilePictureUpload = async (file) => {
-    if (user && file) {
-      try {
-        if (file.size > 10 * 1024 * 1024) {
-          alert("File size exceeds the 10 MB limit.");
-          return;
-        }
-
-        setUploading(true);
-        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
-
-        const userDoc = doc(db, "users", user.uid);
-        await updateDoc(userDoc, { profilePicture: downloadURL });
-
-        setProfilePicture(downloadURL);
-        alert("Profile picture updated!");
-      } catch (error) {
-        console.error("Error uploading profile picture:", error);
-        alert("Failed to upload profile picture. Please try again.");
-      } finally {
-        setUploading(false);
-      }
-    }
-  };
-
   const handleSave = async () => {
     if (user) {
       try {
         const userDoc = doc(db, "users", user.uid);
         await updateDoc(userDoc, { displayName });
+
+        // Update Firebase Authentication profile
+        await updateProfile(auth.currentUser, { displayName });
+
+        // Update the local user object
+        setUser({ ...user, displayName });
+
         alert("Profile updated successfully!");
         setEditing(false);
       } catch (error) {
@@ -132,7 +106,11 @@ const ProfilePage = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading profile...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading profile...
+      </div>
+    );
   }
 
   return (
@@ -140,23 +118,6 @@ const ProfilePage = () => {
       <h1 className="text-4xl font-bold text-center mb-6">Profile</h1>
       {profile ? (
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-          <div className="mb-6 text-center">
-            <Image
-              src={profilePicture || defaultProfileImage}
-              alt="Profile"
-              className="mx-auto rounded-full object-cover mb-4"
-              width={128}
-              height={128}
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleProfilePictureUpload(e.target.files[0])}
-              className="block mx-auto text-sm"
-              disabled={uploading}
-            />
-            {uploading && <p className="text-blue-500">Uploading...</p>}
-          </div>
           <div className="mb-6">
             <label className="block text-lg font-bold mb-2">Name:</label>
             {editing ? (
@@ -178,14 +139,14 @@ const ProfilePage = () => {
             {editing ? (
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg"
+                className="text-center bg-green-500 text-white px-4 py-2 rounded-md font-medium hover:bg-green-600 transition duration-200 shadow-sm"
               >
                 Save
               </button>
             ) : (
               <button
                 onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                className="text-center bg-blue-500 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-600 transition duration-200 shadow-sm"
               >
                 Edit
               </button>
@@ -197,8 +158,11 @@ const ProfilePage = () => {
               <ul className="list-disc pl-6">
                 {quizHistory.map((quiz, index) => (
                   <li key={index} className="mb-2">
-                    <span className="font-bold">{quiz.topicName}</span> -{" "}
-                    <span>{quiz.score} pts</span>
+                    <span className="font-bold">{quiz.category}</span> -{" "}
+                    <span>{quiz.score} pts</span>{" "}
+                    <span className="text-gray-500 text-sm">
+                      ({new Date(quiz.timestamp?.toDate()).toLocaleString()})
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -224,12 +188,14 @@ const ProfilePage = () => {
               <p>No achievements yet.</p>
             )}
           </div>
-          <Link
-            href="/"
-            className="block mt-6 text-center text-blue-500 hover:underline"
-          >
-            Back to Home
-          </Link>
+          <div className="flex justify-center space-x-4 mt-6">
+            <Link
+              href="/topics"
+              className="text-center bg-blue-500 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-600 transition duration-200 shadow-sm"
+            >
+              Back to Topics
+            </Link>
+          </div>
         </div>
       ) : (
         <p className="text-center">No profile found.</p>

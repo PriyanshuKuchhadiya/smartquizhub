@@ -117,10 +117,11 @@ const LeaderboardPage = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Leaderboard</h1>
         <div className="flex space-x-4">
-          <Link href="/" className="text-blue-500 hover:underline">
-            Back to Home
-          </Link>
-          <Link href="/topics" className="text-blue-500 hover:underline">
+          
+          <Link
+            href="/topics"
+            className="text-center bg-blue-500 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-600 transition duration-200 shadow-sm"
+          >
             Back to Topics
           </Link>
         </div>

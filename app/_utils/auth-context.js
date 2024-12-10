@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   GithubAuthProvider,
   GoogleAuthProvider,
+  updateProfile, // Import updateProfile
 } from "firebase/auth";
 import { auth } from "./firebase";
 
@@ -49,6 +50,18 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  const updateUserProfile = async (updates) => {
+    if (auth.currentUser) {
+      try {
+        await updateProfile(auth.currentUser, updates);
+        setUser({ ...auth.currentUser, ...updates }); // Update the context with new user data
+      } catch (error) {
+        console.error("Error updating profile:", error.message);
+        throw error;
+      }
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -57,7 +70,15 @@ export const AuthContextProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, gitHubSignIn, googleSignIn, firebaseSignOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        gitHubSignIn,
+        googleSignIn,
+        firebaseSignOut,
+        updateUserProfile, // Expose updateUserProfile method
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

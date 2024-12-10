@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { auth } from "../_utils/firebase"; // Import Firebase auth
 import { onAuthStateChanged, signOut } from "firebase/auth"; // Import auth methods
+import { useRouter } from "next/navigation"; // Import useRouter for redirection
 
 export default function TopicsPage() {
   const [topics, setTopics] = useState([
@@ -39,6 +40,9 @@ export default function TopicsPage() {
   const [type, setType] = useState("any");
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false); // Confirmation popup
+
+  const router = useRouter(); // Initialize useRouter for redirection
 
   // Track authenticated user
   useEffect(() => {
@@ -48,11 +52,11 @@ export default function TopicsPage() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogoutConfirm = async () => {
     try {
       await signOut(auth);
-      alert("Successfully logged out.");
-      window.location.href = "/";
+      setShowLogoutPopup(false); // Close confirmation popup
+      router.push("/login"); // Redirect to the login page
     } catch (error) {
       console.error("Logout error:", error);
       alert("Failed to logout.");
@@ -100,7 +104,7 @@ export default function TopicsPage() {
             </li>
             <li className="mb-4">
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutPopup(true)} // Trigger confirmation popup
                 className="text-lg hover:underline focus:outline-none"
               >
                 Logout
@@ -222,6 +226,29 @@ export default function TopicsPage() {
       <footer className="py-6 mt-12 bg-gray-800 text-white text-center">
         <p>&copy; 2024 SmartQuizHub. All rights reserved.</p>
       </footer>
+
+      {/* Logout Confirmation Popup */}
+      {showLogoutPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <h2 className="text-xl font-semibold mb-4">Are you sure you want to logout?</h2>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleLogoutConfirm}
+                className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600"
+              >
+                Yes, Logout
+              </button>
+              <button
+                onClick={() => setShowLogoutPopup(false)}
+                className="px-6 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600"
+              >
+                No, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

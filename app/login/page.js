@@ -44,14 +44,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 flex items-center justify-center">
-      <div className="bg-white shadow-lg rounded-lg w-full max-w-md p-8">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Login</h1>
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="bg-gray-100 shadow-lg rounded-lg w-full max-w-md p-8">
+        <h1 className="text-3xl font-bold text-center mb-6 text-purple-700">Login</h1>
         {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
 
         <form onSubmit={handleEmailLogin} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600">
+            <label htmlFor="email" className="block text-sm font-medium text-purple-700">
               Email
             </label>
             <input
@@ -64,7 +64,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-600">
+            <label htmlFor="password" className="block text-sm font-medium text-purple-700">
               Password
             </label>
             <input
@@ -83,7 +83,7 @@ export default function LoginPage() {
           </div>
           <button
             type="submit"
-            className="w-full py-2 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 text-white rounded-lg font-bold shadow-md hover:shadow-lg transform hover:scale-105 transition"
+            className="w-full py-2 bg-purple-600 text-white rounded-lg font-bold shadow-md hover:bg-purple-700 hover:shadow-lg transition"
           >
             LOGIN
           </button>
@@ -107,7 +107,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="mt-4 text-center">
-          <p className="text-sm">
+          <p className="text-sm text-gray-600">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-purple-600 hover:underline">
               Sign Up
