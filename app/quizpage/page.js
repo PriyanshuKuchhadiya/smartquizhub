@@ -24,9 +24,9 @@ export default function QuizPage() {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(300);
-  const [showPopup, setShowPopup] = useState(false); // Popup for Next button
-  const [showQuitPopup, setShowQuitPopup] = useState(false); // Popup for Quit Quiz button
-  const [showSubmitPopup, setShowSubmitPopup] = useState(false); // Popup for Submit button
+  const [showPopup, setShowPopup] = useState(false);
+  const [showQuitPopup, setShowQuitPopup] = useState(false);
+  const [showSubmitPopup, setShowSubmitPopup] = useState(false);
 
   // Initialize query parameters
   useEffect(() => {
@@ -108,20 +108,20 @@ export default function QuizPage() {
 
     setScore(calculatedScore);
     setSubmitted(true);
-    setShowSubmitPopup(false); // Close the submit popup after submitting
+    setShowSubmitPopup(false);
   }, [questions, userAnswers]);
 
   const quitQuiz = () => {
-    setShowQuitPopup(true); // Show quit confirmation popup
+    setShowQuitPopup(true);
   };
 
   const confirmQuit = () => {
-    setShowQuitPopup(false); // Close the popup
-    setShowIntro(true); // Redirect to intro
+    setShowQuitPopup(false);
+    setShowIntro(true);
   };
 
   const cancelQuit = () => {
-    setShowQuitPopup(false); // Close the popup without quitting
+    setShowQuitPopup(false);
   };
 
   const goToNextQuestion = () => {
@@ -148,7 +148,7 @@ export default function QuizPage() {
     setShowPopup(false);
   };
 
-  // Quiz Intro and Error Screens
+  // Rendering logic
   if (showIntro) {
     return (
       <div className="min-h-screen bg-white text-gray-800 flex flex-col items-center justify-center">
@@ -204,7 +204,6 @@ export default function QuizPage() {
     );
   }
 
-  // Quiz Screen
   return (
     <div className="min-h-screen bg-white text-gray-800 relative">
       <div className="container mx-auto px-4 py-10">
@@ -212,14 +211,12 @@ export default function QuizPage() {
           <h1 className="text-4xl font-bold">{`Quiz: ${categoryName}`}</h1>
           <div className="text-xl font-medium">Time Left: {renderTimer()}</div>
         </header>
-
         {submitted ? (
           <div className="text-center">
             <h2 className="text-3xl font-bold">Quiz Completed!</h2>
             <p className="text-xl mt-4">
               Your Score: {score}/{questions.length}
             </p>
-
             <div className="mt-8 text-left bg-gray-100 p-6 rounded-lg shadow-lg">
               <h3 className="text-2xl font-semibold mb-4">Results:</h3>
               {questions.map((question, index) => (
@@ -247,7 +244,6 @@ export default function QuizPage() {
                 </div>
               ))}
             </div>
-
             <Link href="/topics">
               <button className="mt-6 px-6 py-3 bg-yellow-400 text-gray-800 rounded-lg font-bold hover:bg-yellow-500">
                 Back to Topics
@@ -256,7 +252,6 @@ export default function QuizPage() {
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-4">
-            {/* Sidebar */}
             <div className="col-span-1 bg-gray-200 rounded-lg shadow p-6 overflow-y-auto h-[calc(100vh-200px)]">
               <h3 className="text-lg font-bold mb-4">Questions</h3>
               <div className="grid grid-cols-5 gap-2">
@@ -281,8 +276,6 @@ export default function QuizPage() {
                 ))}
               </div>
             </div>
-
-            {/* Main Content */}
             <div className="col-span-3">
               <div className="bg-gray-100 text-gray-800 rounded-lg shadow-md p-6 mb-6">
                 <h2 className="text-xl font-semibold mb-4">
@@ -308,7 +301,6 @@ export default function QuizPage() {
                   ))}
                 </ul>
               </div>
-
               <div className="flex justify-between">
                 <button
                   onClick={quitQuiz}
@@ -333,7 +325,6 @@ export default function QuizPage() {
                   </button>
                 </div>
               </div>
-
               <div className="text-center mt-6">
                 <button
                   onClick={() => setShowSubmitPopup(true)}
@@ -346,8 +337,6 @@ export default function QuizPage() {
           </div>
         )}
       </div>
-
-      {/* Popup for Next */}
       {showPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -361,8 +350,6 @@ export default function QuizPage() {
           </div>
         </div>
       )}
-
-      {/* Popup for Quit */}
       {showQuitPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
@@ -384,8 +371,6 @@ export default function QuizPage() {
           </div>
         </div>
       )}
-
-      {/* Popup for Submit */}
       {showSubmitPopup && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
